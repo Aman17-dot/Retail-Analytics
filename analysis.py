@@ -13,10 +13,11 @@
 # %%
 import pandas as pd
 import numpy as np
-import matplotlib.pyplot as plt
-import seaborn as sns
+import plotly.express as px
+import plotly.graph_objects as go
+import plotly.io as pio
 
-sns.set_style("whitegrid")
+pio.templates.default = "plotly_white"
 pd.set_option("display.max_columns", None)
 
 df = pd.read_csv("data/raw_orders.csv")
@@ -140,16 +141,25 @@ completed = clean[clean["order_status"].isin(["Delivered", "Returned"])].copy()
 # ## 4. Revenue trend: confirm the Q3 dip is real
 
 # %%
-monthly_rev = completed.groupby("month")["revenue"].sum()
+monthly_rev = completed.groupby("month")["revenue"].sum().reset_index()
+monthly_rev["month_str"] = monthly_rev["month"].astype(str)
 
-plt.figure(figsize=(10, 5))
-monthly_rev.plot(kind="line", marker="o", color="#2563eb")
-plt.title("Monthly Revenue, 2024")
-plt.ylabel("Revenue")
-plt.xlabel("Month")
-plt.tight_layout()
-plt.savefig("outputs_monthly_revenue.png", dpi=120)
-plt.show()
+fig1 = px.line(
+    monthly_rev,
+    x="month_str",
+    y="revenue",
+    markers=True,
+    title="Monthly Revenue, 2024",
+    labels={"month_str": "Month", "revenue": "Total Revenue ($)"},
+    color_discrete_sequence=["#2563eb"]
+)
+fig1.update_layout(
+    xaxis_title="Month",
+    yaxis_title="Revenue ($)",
+    hovermode="x unified",
+    template="plotly_white"
+)
+fig1.show()
 
 # %%
 q2 = completed[completed["month"].astype(str).isin(["2024-04", "2024-05", "2024-06"])]["revenue"].sum()
@@ -173,19 +183,26 @@ q3_by_cat = completed[completed["month"].astype(str).isin(["2024-07", "2024-08",
 
 cat_compare = pd.DataFrame({"Q2": q2_by_cat, "Q3": q3_by_cat})
 cat_compare["change_pct"] = (cat_compare["Q3"] - cat_compare["Q2"]) / cat_compare["Q2"]
-cat_compare = cat_compare.sort_values("change_pct")
-cat_compare
+cat_compare = cat_compare.sort_values("change_pct").reset_index()
+cat_compare["change_pct_num"] = cat_compare["change_pct"] * 100
+cat_compare["trend"] = cat_compare["change_pct_num"].apply(lambda x: "Growth" if x >= 0 else "Decline")
 
-# %%
-plt.figure(figsize=(9, 5))
-sns.barplot(x=cat_compare.index, y=cat_compare["change_pct"] * 100, palette="RdYlGn_r")
-plt.axhline(0, color="black", linewidth=0.8)
-plt.ylabel("Q2 -> Q3 Revenue Change (%)")
-plt.title("Revenue Change by Category, Q2 vs Q3 2024")
-plt.xticks(rotation=30)
-plt.tight_layout()
-plt.savefig("outputs_category_change.png", dpi=120)
-plt.show()
+fig2 = px.bar(
+    cat_compare,
+    x="category",
+    y="change_pct_num",
+    color="trend",
+    color_discrete_map={"Growth": "#16a34a", "Decline": "#dc2626"},
+    title="Revenue Change by Category, Q2 vs Q3 2024 (%)",
+    labels={"category": "Category", "change_pct_num": "Q2 -> Q3 Revenue Change (%)"}
+)
+fig2.add_hline(y=0, line_dash="dash", line_color="gray")
+fig2.update_layout(
+    xaxis_title="Category",
+    yaxis_title="Revenue Change (%)",
+    template="plotly_white"
+)
+fig2.show()
 
 # %% [markdown]
 # **Finding:** `Fashion` and `Beauty` show a sharp Q3 drop, while other categories grew
@@ -200,13 +217,25 @@ plt.show()
 # fall sharply while price/AOV stays normal (people just couldn't place orders at all).
 
 # %%
-monthly_orders = completed.groupby(["month", "category"]).size().unstack(fill_value=0)
-monthly_orders[["Fashion", "Beauty"]].plot(figsize=(10, 5), marker="o")
-plt.title("Monthly Order Count: Fashion & Beauty")
-plt.ylabel("Number of Orders")
-plt.tight_layout()
-plt.savefig("outputs_fashion_beauty_orders.png", dpi=120)
-plt.show()
+monthly_orders = completed.groupby(["month", "category"]).size().unstack(fill_value=0).reset_index()
+monthly_orders["month_str"] = monthly_orders["month"].astype(str)
+
+fig3 = px.line(
+    monthly_orders,
+    x="month_str",
+    y=["Fashion", "Beauty"],
+    markers=True,
+    title="Monthly Order Count: Fashion & Beauty (2024)",
+    labels={"month_str": "Month", "value": "Number of Orders", "variable": "Category"},
+    color_discrete_map={"Fashion": "#dc2626", "Beauty": "#ea580c"}
+)
+fig3.update_layout(
+    xaxis_title="Month",
+    yaxis_title="Number of Orders",
+    hovermode="x unified",
+    template="plotly_white"
+)
+fig3.show()
 
 # %%
 aov = completed.groupby(["month", "category"])["revenue"].mean().unstack(fill_value=0)
@@ -240,12 +269,6 @@ seg_q3 = known[known["month"].astype(str).isin(["2024-07","2024-08","2024-09"])]
 seg_compare = pd.DataFrame({"Q2": seg_q2, "Q3": seg_q3})
 seg_compare["change_pct"] = (seg_compare["Q3"] - seg_compare["Q2"]) / seg_compare["Q2"]
 seg_compare
-
-# %% [markdown]
-# **Finding:** The decline is fairly proportional across value segments — High Value
-# customers didn't specifically abandon the store, which further supports a supply issue
-# (affects whoever wanted to buy Fashion/Beauty items, regardless of loyalty tier) rather
-# than a churn/loyalty problem.
 
 # %% [markdown]
 # ## 8. Conclusion & recommendation
