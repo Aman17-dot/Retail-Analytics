@@ -108,7 +108,7 @@ for idx in glitch_idx:
 df = df.sample(frac=1, random_state=3).reset_index(drop=True)
 
 import os
-os.makedirs("/home/claude/retail_project/data", exist_ok=True)
-df.to_csv("/home/claude/retail_project/data/raw_orders.csv", index=False)
+os.makedirs("data", exist_ok=True)
+df.to_csv("data/raw_orders.csv", index=False)
 print("Saved:", df.shape)
 print(df.head())
