@@ -1,4 +1,18 @@
-# Retail Order Analytics — Is Any Category Quietly Struggling?
+## 📊 Portfolio & Analysis
+
+View the complete project analysis with visualizations:
+
+📥 [Download Portfolio PDF](./Aman_DataAnalyst_Portfolio.pdf) | [View on GitHub](#)
+
+### Key Finding
+Discovered a **hidden 35-37% revenue decline** in Fashion & Beauty categories 
+masked by +3.4% overall growth. Full analysis includes:
+- 3 interactive visualizations (monthly trends, segment breakdown, category heatmap)
+- SQL & Python analysis methodology
+- Business impact assessment & recommendations
+
+[View Full Portfolio PDF →](./Aman_DataAnalyst_Portfolio.pdf)
+Retail Order Analytics — Is Any Category Quietly Struggling?
 
 End-to-end data analytics project: messy raw data → Python ETL cleaning → SQL queries → **Power BI Interactive Dashboard**.
 
